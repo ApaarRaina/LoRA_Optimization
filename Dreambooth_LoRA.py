@@ -17,10 +17,10 @@ CLASS_IMAGES_DIR = os.path.join(DATASET_DIR, "class_images")
 OUTPUT_DIR       = "trained"
 
 
-CLASS_PROMPT      = "Indian business man,face visible,wearing a suit or casual wear,detailed, sharp focus, photorealistic, colored"
+CLASS_PROMPT      = "an indian business man,face visible,wearing a suit or casual wear,detailed, sharp focus, photorealistic, colored"
 NEGATIVE_PROMPT   = "blurry, low quality, cartoon, painting, illustration, ugly, deformed, watermark, text"
 NUM_CLASS_IMAGES  = 250
-PRIOR_LOSS_WEIGHT = 1.0
+PRIOR_LOSS_WEIGHT = 1.5
 
 MAX_STEPS  = 500000
 SAVE_EVERY = 100
@@ -55,7 +55,7 @@ def generate_class_images():
             CLASS_PROMPT,
             negative_prompt=NEGATIVE_PROMPT,
             num_inference_steps=50,
-            guidance_scale=6
+            guidance_scale=6.5
         ).images[0]
         image.save(os.path.join(CLASS_IMAGES_DIR, f"class_{i:04d}.jpg"))
 
