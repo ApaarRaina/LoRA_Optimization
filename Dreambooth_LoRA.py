@@ -17,12 +17,12 @@ CLASS_IMAGES_DIR = os.path.join(DATASET_DIR, "class_images")
 OUTPUT_DIR       = "trained"
 
 
-CLASS_PROMPT      = "an business indian man,wearing a suit or casual wear,detailed, sharp focus, photorealistic, colored"
+CLASS_PROMPT      = "Indian business man,face visible,wearing a suit or casual wear,detailed, sharp focus, photorealistic, colored"
 NEGATIVE_PROMPT   = "blurry, low quality, cartoon, painting, illustration, ugly, deformed, watermark, text"
-NUM_CLASS_IMAGES  = 100
+NUM_CLASS_IMAGES  = 250
 PRIOR_LOSS_WEIGHT = 1.0
 
-MAX_STEPS  = 1000
+MAX_STEPS  = 500000
 SAVE_EVERY = 100
 BATCH_SIZE = 2
 
@@ -55,7 +55,7 @@ def generate_class_images():
             CLASS_PROMPT,
             negative_prompt=NEGATIVE_PROMPT,
             num_inference_steps=50,
-            guidance_scale=7.5
+            guidance_scale=6
         ).images[0]
         image.save(os.path.join(CLASS_IMAGES_DIR, f"class_{i:04d}.jpg"))
 
@@ -129,8 +129,8 @@ vae.requires_grad_(False)
 # UNet LoRA
 unet.requires_grad_(False)
 unet = get_peft_model(unet, LoraConfig(
-    r=32,
-    lora_alpha=64,
+    r=8,
+    lora_alpha=16,
     target_modules=["to_q", "to_k", "to_v", "to_out.0"],
     bias="none"
 ))
@@ -138,8 +138,8 @@ unet = get_peft_model(unet, LoraConfig(
 # Text encoder LoRA — learns what "aadish" means
 text_encoder.requires_grad_(False)
 text_encoder = get_peft_model(text_encoder, LoraConfig(
-    r=32,
-    lora_alpha=64,
+    r=8,
+    lora_alpha=16,
     target_modules=["q_proj", "v_proj"],
     bias="none"
 ))
@@ -149,7 +149,7 @@ print("Text encoder:"); text_encoder.print_trainable_parameters()
 
 optimizer = torch.optim.AdamW(
     list(unet.parameters()) + list(text_encoder.parameters()),
-    lr=5e-6
+    lr=7e-5
 )
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -179,7 +179,7 @@ def diffusion_loss(images, captions):
     return F.mse_loss(noise_pred, noise)
 
 
-num_epochs = 1000
+num_epochs = 500
 step = 0
 class_iter = iter(class_loader)
 
@@ -203,6 +203,7 @@ for epoch in range(num_epochs):
 
         optimizer.zero_grad()
         loss.backward()
+        clip_grad_norm_(list(unet.parameters()) + list(text_encoder.parameters()),max_norm=1.0)
         optimizer.step()
 
         total_loss += loss.item()
@@ -223,6 +224,6 @@ for epoch in range(num_epochs):
         print(f"Reached max steps ({MAX_STEPS}), stopping.")
         break
 
-unet.save_pretrained(f"{OUTPUT_DIR}/lora_weights_dummy")
-text_encoder.save_pretrained(f"{OUTPUT_DIR}/lora_text_encoder_dummy")
+unet.save_pretrained(f"{OUTPUT_DIR}/lora_weights")
+text_encoder.save_pretrained(f"{OUTPUT_DIR}/lora_text_encoder")
 print("Training complete. Final weights saved.")
