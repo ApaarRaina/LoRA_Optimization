@@ -5,8 +5,8 @@ from peft import PeftModel
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model_id = "runwayml/stable-diffusion-v1-5"
-prompt = "a moja business man,wearing sunglasses,looking at a greek statue in a museum,greek statue visible."
-prompt_base = "a business man,wearing sunglasses,looking at a greek statue in a museum,greek statue visible."
+prompt = "a moja business man,wearing sunglasses,smiling."
+prompt_base = "a business man,wearing sunglasses,smiling."
 negative_prompt="blurry, low quality, cartoon, painting, illustration, ugly, deformed, watermark, text"
 
 base_pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to(device)

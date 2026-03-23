@@ -17,10 +17,17 @@ CLASS_IMAGES_DIR = os.path.join(DATASET_DIR, "class_images")
 OUTPUT_DIR       = "trained"
 
 
-CLASS_PROMPT      = "an indian business man,face visible,wearing a suit or casual wear,detailed, sharp focus, photorealistic, colored"
+CLASS_PROMPT = [
+    "an indian business man speaking into a microphone, photorealistic",
+    "an indian business man sitting, photorealistic",
+    "an indian business man walking, photorealistic",
+    "an indian business man smiling, photorealistic",
+    "an indian business man wearing a suit, photorealistic",
+]
+
 NEGATIVE_PROMPT   = "blurry, low quality, cartoon, painting, illustration, ugly, deformed, watermark, text"
-NUM_CLASS_IMAGES  = 250
-PRIOR_LOSS_WEIGHT = 1.5
+NUM_CLASS_IMAGES  = 1000
+PRIOR_LOSS_WEIGHT = 1
 
 MAX_STEPS  = 500000
 SAVE_EVERY = 100
@@ -51,18 +58,18 @@ def generate_class_images():
     pipe.set_progress_bar_config(disable=True)
 
     for i in tqdm(range(existing, NUM_CLASS_IMAGES)):
+        prompt = CLASS_PROMPT[i % len(CLASS_PROMPT)]
         image = pipe(
-            CLASS_PROMPT,
+            prompt,
             negative_prompt=NEGATIVE_PROMPT,
             num_inference_steps=50,
-            guidance_scale=6.5
+            guidance_scale=7.5
         ).images[0]
         image.save(os.path.join(CLASS_IMAGES_DIR, f"class_{i:04d}.jpg"))
 
     del pipe
     torch.cuda.empty_cache()
     print("Class image generation complete.")
-
 
 class InstanceDataset(Dataset):
     def __init__(self, prompt_file, transform, split="train"):
@@ -101,7 +108,7 @@ class ClassDataset(Dataset):
 
     def __getitem__(self, idx):
         image = Image.open(self.images[idx]).convert("RGB")
-        return self.transform(image), self.class_prompt
+        return self.transform(image), str(self.class_prompt)
 
 
 generate_class_images()
@@ -149,7 +156,7 @@ print("Text encoder:"); text_encoder.print_trainable_parameters()
 
 optimizer = torch.optim.AdamW(
     list(unet.parameters()) + list(text_encoder.parameters()),
-    lr=7e-5
+    lr=1e-5
 )
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -179,7 +186,7 @@ def diffusion_loss(images, captions):
     return F.mse_loss(noise_pred, noise)
 
 
-num_epochs = 500
+num_epochs = 5000
 step = 0
 class_iter = iter(class_loader)
 
