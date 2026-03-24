@@ -156,7 +156,7 @@ print("Text encoder:"); text_encoder.print_trainable_parameters()
 
 optimizer = torch.optim.AdamW(
     list(unet.parameters()) + list(text_encoder.parameters()),
-    lr=1e-5
+    lr=5e-5
 )
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -186,7 +186,7 @@ def diffusion_loss(images, captions):
     return F.mse_loss(noise_pred, noise)
 
 
-num_epochs = 5000
+num_epochs = 1000
 step = 0
 class_iter = iter(class_loader)
 

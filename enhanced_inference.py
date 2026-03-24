@@ -20,7 +20,7 @@ negative_prompt = (
 )
 
 SEED           = 42
-NUM_STEPS      = 100
+NUM_STEPS      = 50
 GUIDANCE_SCALE = 7.5
 CODEFORMER_W   = 0.5   # 0 = max quality fix, 1 = max fidelity to input
 
